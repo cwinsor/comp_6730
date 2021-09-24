@@ -1,0 +1,6 @@
+
+snap-stanford
+
+matplotlib
+scipy
+numpy
