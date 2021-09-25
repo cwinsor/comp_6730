@@ -22,7 +22,8 @@ print("number of edges = {}".format(G1.GetEdges()))
 
 
 
-# number of edges...
+#(2) number of self-edges
+#(3) number of directed edges
 self_edge_list = []
 directed_edge_list = []
 for EI in G1.Edges():
@@ -35,29 +36,11 @@ print("number of nodes with a self-edge = {}".format(len(self_edge_list)))
 print("number of nodes with a directed-edge = {}".format(len(directed_edge_list)))
 
 
-# (5) undirected edged a.k.a. unique unordered pairs
-# (a,b) or (b,a) where a!=b and order does not matter
-#
-# this can also be described as:
-# undirected edges, excluding self-edges
-
-# first approach:
-# list = []
-# for each Node n:
-#   for each Edge (a,b):
-#     if (a != b) and (b,a) not already in list:
-#       add (a,b) to list
-
-# second approach:
-# list = []
-# for each Edge (a,b):
-#   if (a != b):
-#     add (a,b) to list   i.e. make an undirected graph
-# eliminate duplicates i.e. [(a,b),(b,a)] -> [(a,b)]
-
-# third approach:
-# convert graph to undirected graph
-# count the number of edges, excluding self-edges
+# (4) undirected edged a.k.a. unique unordered pairs
+#   (a,b) or (b,a) where a!=b and order does not matter
+# approach:
+#   convert graph to undirected graph
+#   count the number of edges, excluding self-edges
 G2 = G1.ConvertGraph(snap.TUNGraph)
 # number of non-self-edges...
 non_self_edge_list = []
@@ -66,38 +49,62 @@ for EI in G2.Edges():
         non_self_edge_list.append(EI)
 print("number of undirected edges = {}".format(len(non_self_edge_list)))
 
-
-
-
-# Recripocated pairs is a pair of edges (a->b), (b->a)  where a!=b
+# (5) Recripocated pairs is a pair of edges (a->b), (b->a)  where a!=b
 # algorithm:
-# for each node A, a recripocated pair is where
-# there is an out-edge to b, and an in-edge from b
-# Since each node has in-edge and out-edge lists we will use those
+#   for each node A, a recripocated pair is
+#   where there exists an out-edge to b, and an in-edge from b
 #
-# given a node, return the count of recripocated pair count for that node
+# method:
+#   given a node, return the count of recripocated pairs for that node
 #   neighbors_in  is a set: the neighbors in the in_edge list
 #   neighbors_out is a set: the neighbors in the out_edge list
 #   intersection of neighbors_in, neighbors_out is the recripocated pairs
+def recripocated_pair_count(node):
+    out_edges = set()
+    in_edges = set()
+    for id in node.GetOutEdges():
+        out_edges.add(id)
+    for id in node.GetInEdges():
+        in_edges.add(id)
 
-# def recripocated_pair_count(node):
-#     neighbors_out = set()
-#     neighbors_in = set()
-#     for edge in node.GetOutEdges():
-#         neighbors_out.add(edge.GetDstNId())
-#     for edge in node.getInEdges():
-#         neighbors_in.add(edge.GetSrcNId())
-#     # remove self-loop if it exists
-#     neighbors_out.remove(node)
-#     neighbors_in.remove(node)
-#     # intersection of the sets are those neighbors with both in and out edges
-#     intersection = neighbors_in.intersection(neighbors_out)
-#     return len(intersection)
+    # in-degree, out-degree
+    out_degree = len(out_edges)
+    in_degree = len(in_edges)
+
+    # for recriprocal pair - remove self-loop if it exists
+    try: 
+        out_edges.remove(node.GetId())
+        in_edges.remove(node.GetId())
+    except KeyError:
+        x = 0 # do nothing
+    # intersection of the sets are those neighbors with both in and out edges
+    out_intersect_in = in_edges.intersection(out_edges)
+
+    return [len(out_intersect_in), out_degree, in_degree]
+
+# comment...
+
+total_recripocated_pair = 0
+total_out_degree_eq_zero = 0
+total_out_degree_gt_10 = 0
+total_in_degree_eq_zero = 0
+total_in_degree_gt_10 = 0
+for NI in G1.Nodes():
+    recripocated_pair_ct, out_deg, in_deg = recripocated_pair_count(NI)
+    total_recripocated_pair += recripocated_pair_ct
+    if out_deg == 0:
+        total_out_degree_eq_zero += 1 
+    if in_deg == 0:
+        total_in_degree_eq_zero += 1
+    if out_deg > 10:
+        total_out_degree_gt_10 += 1
+    if in_deg > 10:
+        total_in_degree_gt_10 += 1
 
 
-# total_recripocated_pair = 0
-# for NI in G1.Nodes():
-#     total_recripocated_pair += recripocated_pair_count(NI)
-# print("total_recripocated_pair = {}".format(total_recripocated_pair))
+
+print("total_recripocated_pair = {}".format(total_recripocated_pair//2))
+print("total_out_degree zero nodes = {}".format(total_out_degree_eq_zero))
+print("total_in_degree zero nodes = {}".format(total_in_degree_eq_zero))
 
 
