@@ -1,25 +1,24 @@
 import snap
 
-# create a graph PNGraph
-G1 = snap.TNGraph.New()
-G1.AddNode(1)
-G1.AddNode(2)
-G1.AddNode(3)
+toy = False
+if (toy):
+    # create a graph PNGraph
+    G1 = snap.TNGraph.New()
+    G1.AddNode(1)
+    G1.AddNode(2)
+    G1.AddNode(3)
 
-G1.AddEdge(1,2)
-G1.AddEdge(2,1)
-G1.AddEdge(1,3)
-G1.AddEdge(1,1)
+    G1.AddEdge(1,2)
+    G1.AddEdge(2,1)
+    G1.AddEdge(1,3)
+    G1.AddEdge(1,1)
+else:
+    # load from text file
+    G1 = snap.LoadEdgeList(snap.TNGraph, ".\datasets\Wiki-Vote.txt", 0, 1)
 
 # number of nodes...
 print("number of nodes = {}".format(G1.GetNodes()))
 print("number of edges = {}".format(G1.GetEdges()))
-
-G1.AddEdge(1,3)
-# number of nodes...
-print("number of nodes = {}".format(G1.GetNodes()))
-print("number of edges = {}".format(G1.GetEdges()))
-
 
 
 #(2) number of self-edges

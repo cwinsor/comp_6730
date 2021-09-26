@@ -1,7 +1,6 @@
 import snap
 
 toy = False
-
 if (toy):
     # create a graph PNGraph
     G1 = snap.TNGraph.New()
@@ -16,8 +15,6 @@ if (toy):
 else:
     # load from text file
     G1 = snap.LoadEdgeList(snap.TNGraph, ".\datasets\Wiki-Vote.txt", 0, 1)
-    # print("G5: Nodes %d, Edges %d" % (G5.GetNodes(), G5.GetEdges()))
-
 
 # number of nodes...
 print("number of nodes = {}".format(G1.GetNodes()))
