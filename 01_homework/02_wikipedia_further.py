@@ -1,4 +1,6 @@
 import snap
+import numpy as np
+import matplotlib.pyplot as plt
 
 toy = False
 if (toy):
@@ -20,7 +22,6 @@ else:
 print("number of nodes = {}".format(G1.GetNodes()))
 print("number of edges = {}".format(G1.GetEdges()))
 
-
 def out_degree(node):
     out_edges = set()
     for id in node.GetOutEdges():
@@ -28,7 +29,6 @@ def out_degree(node):
 
     # in-degree, out-degree
     out_degree = len(out_edges)
-
     return out_degree
 
 out_degree_list = []
@@ -37,15 +37,14 @@ for NI in G1.Nodes():
     if this_out_degree > 0:
         out_degree_list.append(this_out_degree)
 
-print(out_degree_list)
+min_bin = min(out_degree_list)
+max_bin = max(out_degree_list)
+bins=np.logspace(np.log10(min_bin),np.log10(max_bin), 20)
 
-
-
-import matplotlib.pyplot as plt
 
 plt.hist(
     x=out_degree_list,
-    bins=None,
+    bins=bins,
     range=None,
     density=False,
     weights=None,
@@ -63,7 +62,7 @@ plt.hist(
 
 #plt.plot(out_degree_list)
 plt.xlabel('Out-Degree')
-plt.ylabel('count')
-plt.title("Out Degree")
+plt.ylabel('Count')
+plt.title("Out Degree (log-log) of the Wikipedia Voters Network")
 plt.show()
 
