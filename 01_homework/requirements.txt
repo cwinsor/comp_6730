@@ -1,6 +1,9 @@
 
 snap-stanford
+pandas
 
 matplotlib
 scipy
 numpy
+
+jupyter
