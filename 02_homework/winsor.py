@@ -25,8 +25,9 @@ def genErdosRenyi(N=5242, E=14484):
     """
     ############################################################################
     # TODO: Your code here!
-    import random
     Graph = snap.TUNGraph.New()
+
+    import random
 
     for n in range(0,N):
         Graph.AddNode(n)
@@ -37,10 +38,10 @@ def genErdosRenyi(N=5242, E=14484):
         if src != dst:
             Graph.AddEdge(src, dst)
 
-    print("number of nodes = {}".format(Graph.GetNodes()))
-    print("number of edges = {}".format(Graph.GetEdges()))
-    assert Graph.GetNodes()==N, "number of nodes should be N"
-    assert Graph.GetEdges()==E, "number of edges should be E"
+    # print("number of nodes = {}".format(Graph.GetNodes()))
+    # print("number of edges = {}".format(Graph.GetEdges()))
+    # assert Graph.GetNodes()==N, "number of nodes should be N"
+    # assert Graph.GetEdges()==E, "number of edges should be E"
     ############################################################################
     return Graph
 
@@ -65,10 +66,10 @@ def genCircle(N=5242):
     for n in range(0,N):
         Graph.AddEdge(n, (n+1)%N)
 
-    print("number of nodes = {}".format(Graph.GetNodes()))
-    print("number of edges = {}".format(Graph.GetEdges()))
-    assert Graph.GetNodes()==N, "number of nodes should be N"
-    assert Graph.GetEdges()==N, "number of edges should be same as number of nodes"
+    # print("number of nodes = {}".format(Graph.GetNodes()))
+    # print("number of edges = {}".format(Graph.GetEdges()))
+    # assert Graph.GetNodes()==N, "number of nodes should be N"
+    # assert Graph.GetEdges()==N, "number of edges should be same as number of nodes"
     ############################################################################
     return Graph
 
@@ -84,14 +85,15 @@ def connectNbrOfNbr(Graph, N=5242):
     """
     ############################################################################
     # TODO: Your code here!
+
     # connect each node in the path to its neighbor's neighbors
     for n in range(0,N):
         Graph.AddEdge(n, (n+2)%N)
 
-    print("number of nodes = {}".format(Graph.GetNodes()))
-    print("number of edges = {}".format(Graph.GetEdges()))
-    assert Graph.GetNodes()==N, "number of nodes should be N"
-    assert Graph.GetEdges()==2*Graph.GetNodes(), "number of edges should be 2 * nodes"
+    # print("number of nodes = {}".format(Graph.GetNodes()))
+    # print("number of edges = {}".format(Graph.GetEdges()))
+    # assert Graph.GetNodes()==N, "number of nodes should be N"
+    # assert Graph.GetEdges()==2*Graph.GetNodes(), "number of edges should be 2 * nodes"
     ############################################################################
     return Graph
 
@@ -107,7 +109,9 @@ def connectRandomNodes(Graph, M=4000):
     """
     ############################################################################
     # TODO: Your code here!
+
     import random
+
     # add additional random edges
     # there are already 2N edges from Hamilton path and second order links
     desired_total_edges =  2*Graph.GetNodes() + M
@@ -118,11 +122,10 @@ def connectRandomNodes(Graph, M=4000):
         if src != dst:
             Graph.AddEdge(src, dst)
 
-    print("number of nodes = {}".format(Graph.GetNodes()))
-    print("number of edges = {}".format(Graph.GetEdges()))
-    assert Graph.GetNodes()==num_nodes, "number of nodes should be N"
-    assert Graph.GetEdges()==desired_total_edges, "number of edges should be 2N + M"
-
+    # print("number of nodes = {}".format(Graph.GetNodes()))
+    # print("number of edges = {}".format(Graph.GetEdges()))
+    # assert Graph.GetNodes()==num_nodes, "number of nodes should be N"
+    # assert Graph.GetEdges()==desired_total_edges, "number of edges should be 2N + M"
     ############################################################################
     return Graph
 
@@ -160,8 +163,8 @@ def loadCollabNet(path):
         dst = edge.GetDstNId()
         if src == dst:
             Graph.DelEdge(src, dst)
-    print("number of nodes = {}".format(Graph.GetNodes()))
-    print("number of edges = {}".format(Graph.GetEdges()))
+    # print("number of nodes = {}".format(Graph.GetNodes()))
+    # print("number of edges = {}".format(Graph.GetEdges()))
     ############################################################################
     return Graph
 
@@ -189,7 +192,7 @@ def getDataPointsToPlot(Graph):
     sorted_dict = dict(sorted(x_count_x.items()))
 
     X = list(sorted_dict) # out degree
-    Y = list(map(lambda x: x / number_of_nodes, sorted_dict.values())) # normalized count
+    Y = list(map(lambda x: x / number_of_nodes, sorted_dict.values())) # fraction of nodes
     ############################################################################
     return X, Y
 
@@ -198,6 +201,11 @@ def Q1_1():
     """
     Code for HW1 Q1.1
     """
+    print()
+    print("A key difference between the collaboration and random models \
+is the presence of nodes having higher degree. The collaboration network has \
+nodes up to degree 80, whereas the random model networks have nodes only to degree 20.")
+
     global erdosRenyi, smallWorld, collabNet
     erdosRenyi = genErdosRenyi(5242, 14484)
     smallWorld = genSmallWorld(5242, 14484)
@@ -220,15 +228,14 @@ def Q1_1():
 
 
 # Execute code for Q1.1
-# zona Q1_1()
+Q1_1()
 
-# Problem 1.2
+# Problem 1.2   
 
-# zona
-# # Find max degree of all 3 graphs for plotting (add 2 for padding)
-# maxdeg = max([erdosRenyi.GetNI((snap.GetMxDegNId(erdosRenyi))).GetDeg(),
-#                 smallWorld.GetNI((snap.GetMxDegNId(smallWorld))).GetDeg(),
-#                 collabNet.GetNI((snap.GetMxDegNId(collabNet))).GetDeg()]) + 2
+# Find max degree of all 3 graphs for plotting (add 2 for padding)
+maxdeg = max([erdosRenyi.GetNI((snap.GetMxDegNId(erdosRenyi))).GetDeg(),
+                smallWorld.GetNI((snap.GetMxDegNId(smallWorld))).GetDeg(),
+                collabNet.GetNI((snap.GetMxDegNId(collabNet))).GetDeg()]) + 2
 
 # Erdos Renyi
 def calcQk(Graph, maxDeg):
@@ -242,7 +249,15 @@ def calcQk(Graph, maxDeg):
     """
     ############################################################################
     # TODO: Your code here!
-    q_k = np.zeros(maxDeg)
+    q_k_count = np.zeros(maxDeg) # index is k, value is count
+
+    for node in Graph.Nodes():
+        node_degree = node.GetDeg()
+        if node_degree > 0:
+            k = node_degree - 1
+            q_k_count[k] += node_degree
+
+    q_k = q_k_count / np.sum(q_k_count) # scale
 
     ############################################################################
     return q_k
@@ -257,8 +272,12 @@ def calcExpectedDegree(Graph):
     """
     ############################################################################
     # TODO: Your code here!
-    ed = 0.0
 
+    sum_of_node_degrees = 0
+    for node in Graph.Nodes():
+        sum_of_node_degrees += node.GetDeg()
+
+    ed = sum_of_node_degrees / Graph.GetNodes()
     ############################################################################
     return ed
 
@@ -274,8 +293,17 @@ def calcExpectedExcessDegree(Graph, qk):
     """
     ############################################################################
     # TODO: Your code here!
-    eed = 0.0
 
+    k_qk_sum = 0.0
+ 
+    for node in Graph.Nodes():
+        node_degree = node.GetDeg()
+        if node_degree > 0:
+            k = node_degree - 1
+            k_qk_sum += k * node_degree
+
+    eed = k_qk_sum / Graph.GetEdges()
+    print("eed calc 1 = {}".format(eed))
     ############################################################################
     return eed
 
@@ -316,7 +344,7 @@ def Q1_2_a():
 
 
 # Execute code for Q1.2a
-# zona Q1_2_a()
+Q1_2_a()
 
 
 # Problem 1.3 - Clustering Coefficient
@@ -349,5 +377,5 @@ def Q1_3():
 
 
 # Execute code for Q1.3
-# Q1_3()
+Q1_3()
 
