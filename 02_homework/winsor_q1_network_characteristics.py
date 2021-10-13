@@ -203,8 +203,9 @@ def Q1_1():
     """
     print()
     print("A key difference between the collaboration and random models \
-is the presence of nodes having higher degree. The collaboration network has \
-nodes up to degree 80, whereas the random model networks have nodes only to degree 20.")
+is the highly connected nodes. The collaboration network has nodes up to degree 80 \
+wheras nodes in the random models do not exceed degree 15. \
+The highly referenced authors are probably important!")
 
     global erdosRenyi, smallWorld, collabNet
     erdosRenyi = genErdosRenyi(5242, 14484)
@@ -358,7 +359,48 @@ def calcClusteringCoefficient(Graph):
     """    
     ############################################################################
     # TODO: Your code here!
-    C = 0.0
+
+    def neighbors_of_node(node):
+        neighbor_set = set({})
+        for n in range(node.GetDeg()):
+            neighbor_set.add(node.GetNbrNId(n))
+        return neighbor_set
+
+    def count_of_edges_between_neighbors(Graph, neighbor_set):
+        count = 0
+        for node1_id in neighbor_set:
+            for node2_id in neighbor_set:
+                if Graph.GetNI(node2_id).IsNbrNId(node1_id):
+                    count +=1
+        return count // 2
+
+    from math import factorial
+    def comb(n, k):
+        try:
+            return factorial(n) // factorial(k) // factorial(n - k)
+        except ValueError:
+            return 0
+
+    def clustering_coefficient(Graph, neighbor_set):
+
+        n = len(neighbor_set)
+        if n < 2:
+            return 0
+        else:
+            actual_edge_count = count_of_edges_between_neighbors(Graph, neighbor_set)
+            n_choose_2 = comb(n,2)
+
+            return actual_edge_count / n_choose_2
+
+    # using above functions - do the actual work...
+    sum_clustering_coefficients = 0.0
+    for node in Graph.Nodes():
+        neighbor_set = neighbors_of_node(node)
+        # print("\nnode: {}, degree {} len(neighbors) {} neighbors {}".format(node.GetId(), node.GetDeg(), len(neighbor_set), neighbor_set))
+        clustering_coefficient_this_node = clustering_coefficient(Graph, neighbor_set)
+        # print("clustering coefficient = {}".format(clustering_coefficient_this_node))
+        sum_clustering_coefficients += clustering_coefficient_this_node
+    C = sum_clustering_coefficients / Graph.GetNodes()
 
     ############################################################################
     return C
