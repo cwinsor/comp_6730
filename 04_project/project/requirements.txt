@@ -1,5 +1,10 @@
 pyg
 
+networkx
+numpy
+torch
+
+
 #torch
 #numpy
 
