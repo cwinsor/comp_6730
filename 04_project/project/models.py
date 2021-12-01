@@ -8,6 +8,10 @@ import torch_geometric.utils as pyg_utils
 class GNNStack(torch.nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, args, task='node'):
         super(GNNStack, self).__init__()
+
+        print("model_type = {}".format((args.model_type)))
+        print("model args = {}".format(args))
+
         conv_model = self.build_conv_model(args.model_type)
         self.convs = nn.ModuleList()
         self.convs.append(conv_model(input_dim, hidden_dim))
@@ -46,9 +50,10 @@ class GNNStack(torch.nn.Module):
         # also find pyg_nn.global_max_pool useful for graph classification.
         # Our implementation is ~6 lines, but don't worry if you deviate from this.
 
-        x = None # TODO
-
-        ############################################################################
+        for conv_layer in self.convs:
+            x = self.conv_layer(x, edge_index)
+            x = F.relu(x)
+            x = F.dropout(x, training=self.training)
 
         x = self.post_mp(x)
 

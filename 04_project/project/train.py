@@ -51,6 +51,9 @@ def arg_parse():
     return parser.parse_args()
 
 def train(dataset, task, args):
+
+    print("train args = {}".format(args))
+
     if task == 'graph':
         # graph classification: separate dataloader for test set
         data_size = len(dataset)
