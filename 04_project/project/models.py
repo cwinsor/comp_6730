@@ -75,7 +75,7 @@ class GraphSage(pyg_nn.MessagePassing):
         # Our implementation is ~2 lines, but don't worry if you deviate from this.
 
         print("zona - GraphSage.init ... in_channels {} out_channels {}".format(in_channels, out_channels))
-        self.lin = nn.Linear(in_channels, out_channels)  # i.e. 
+        self.lin = nn.Linear(in_channels, out_channels)  # i.e. phi
         self.agg_lin = nn.Linear(out_channels, out_channels)  # i.e. gamma
 
         ############################################################################
@@ -84,6 +84,7 @@ class GraphSage(pyg_nn.MessagePassing):
             self.normalize_emb = True
 
     def forward(self, x, edge_index):
+        num_nodes = x.size(0)
         # x has shape [N, in_channels]
         # edge_index has shape [2, E]
 
@@ -95,28 +96,31 @@ class GraphSage(pyg_nn.MessagePassing):
         # https://pytorch-geometric.readthedocs.io/en/latest/notes/create_gnn.html
         # Our implementation is ~4 lines, but don't worry if you deviate from this.
 
-        print(type(x))
-        num_nodes = x.size()[0]
+        out = torch.zeros(x.size())
 
-        out = torch.zeros(x.size)
-        print("out = {}".format(out))
+        # print("zona - forward")
+        # print("zona - x.size()   {}".format(x.size()))
+        # print("zona - out.size() {}".format(out.size()))
+        # zz = 2707
+        # print("zona - x[{}]   {}".format(zz, x[zz]))
+        # print("zona - out[{}] {}".format(zz, out[zz]))
 
-        for node in range(0,2):
-            # get neighbors
+        for node in range(1,3):
             neighbor_nodes, neighbor_edges, _, _ = pyg_utils.k_hop_subgraph(
                 node_idx = [node],
                 num_hops = 1,
                 edge_index = edge_index,
                 flow='target_to_source')
-            # aggregate by summing
-            sum_neighbors = torch.sum(neighbor_nodes, 1)
-            out[node] = sum_neighbors / num_neighbors
+            # print("zona - neighbor_nodes {}".format(neighbor_nodes))
+            # aggregation is the sum
+            for neighbor in neighbor_nodes:
+                # if node == 1 or node==2:  # zona
+                #     print("zona -   node {} neighbor {}".format(node, neighbor))
+                #     print("zona -   out[node]   {}".format(out[node]))
+                #     print("zona -   x[neighbor] {}".format(x[neighbor]))
+                out[node] += x[neighbor]
 
-        x = self.lin(x)
-
-
-        # reLu i.e. gamma
-        out = None # TODO
+        out = self.lin(out)
 
         ############################################################################
 
@@ -132,13 +136,39 @@ class GraphSage(pyg_nn.MessagePassing):
 
         return norm.view(-1, 1) * x_j
 
+    # def aggregate(self, inputs, index, ptr, dim_size):
+    #     print("zona - aggregate")
+    #     return super().aggregate(inputs, index, ptr, dim_size)
+
     def update(self, aggr_out):
         ############################################################################
         # TODO: Your code here! Perform the update step here. 
         # Our implementation is ~1 line, but don't worry if you deviate from this.
 
+        # print("zona - update")
+        # print(type(aggr_out))
+        # print("zona - aggr_out.size()   {}".format(aggr_out.size()))
+        # zz = 2707  # zona
+        # print("zona - aggr_out[{}]   {}".format(zz, aggr_out[zz]))
+
         if self.normalize_emb:
-            aggr_out = None # TODO
+            # # test...
+            # # v = [1 -2 3];
+            # # n = norm(v)
+            # # expect n = 3.7417
+            # test = torch.tensor([[1, -2, 3],[1, -2, 3]], dtype=torch.float)
+            # sum_squ = torch.norm(test, dim=1, keepdim=True)
+            # print(sum_squ)
+            # print(test/sum_squ)
+            # assert False, "zona"
+
+            sum_squ = torch.norm(aggr_out, dim=1, keepdim=True)
+            aggr_out = aggr_out/sum_squ
+        else:
+            assert False, "zona - not coded!"
+
+        # gamma
+        aggr_out = self.agg_lin(aggr_out)
 
         ############################################################################
 

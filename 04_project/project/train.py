@@ -81,7 +81,7 @@ def train(dataset, task, args):
 
     # train
     for epoch in range(args.epochs):
-        print("epoch {} of {}".format(epoch, args.epochs))
+        # print("zona - epoch {} of {}".format(epoch, args.epochs))
         total_loss = 0
         model.train()
         for batch in loader:
@@ -101,7 +101,7 @@ def train(dataset, task, args):
         if epoch % 10 == 0:
             test_acc = test(test_loader, model)
             print(test_acc,   '  test')
-    print("done training!")
+    print("zona - done training!")
 
 def test(loader, model, is_validation=False):
     model.eval()
