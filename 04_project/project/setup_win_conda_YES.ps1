@@ -5,9 +5,11 @@ The process is very hands-on and manual...
 
 ---- EVERY TIME ----------------
 
-conda info --envs
+
 conda activate uml_6730_pytorch_pyg
-cd D:\Users\CHRIS\Documents\code_uml_6730_gnn_and_PyG\comp_6730\04_project\project>
+conda info --envs
+cd D:\Users\CHRIS\Documents\code_uml_6730_gnn_and_PyG\comp_6730\04_project\project
+
 code -n .
 
 

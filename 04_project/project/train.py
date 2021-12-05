@@ -53,6 +53,13 @@ def arg_parse():
 def train(dataset, task, args):
 
     print("train args = {}".format(args))
+    print("len(dataset) {}".format(len(dataset)))
+    print("dataset.num_classes {}".format(dataset.num_classes))
+    print("dataset.num_node_features {}".format(dataset.num_node_features))
+    data = dataset[0]
+    print("dataset[0] {}".format(data))
+    print("dataset[0].is_undirected {}".format(data.is_undirected()))
+
 
     if task == 'graph':
         # graph classification: separate dataloader for test set
@@ -74,6 +81,7 @@ def train(dataset, task, args):
 
     # train
     for epoch in range(args.epochs):
+        print("epoch {} of {}".format(epoch, args.epochs))
         total_loss = 0
         model.train()
         for batch in loader:
@@ -93,6 +101,7 @@ def train(dataset, task, args):
         if epoch % 10 == 0:
             test_acc = test(test_loader, model)
             print(test_acc,   '  test')
+    print("done training!")
 
 def test(loader, model, is_validation=False):
     model.eval()

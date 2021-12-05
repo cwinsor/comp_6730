@@ -9,8 +9,8 @@ class GNNStack(torch.nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, args, task='node'):
         super(GNNStack, self).__init__()
 
-        print("model_type = {}".format((args.model_type)))
-        print("model args = {}".format(args))
+        print("zona model_type = {}".format((args.model_type)))
+        print("zona model args = {}".format(args))
 
         conv_model = self.build_conv_model(args.model_type)
         self.convs = nn.ModuleList()
@@ -49,9 +49,9 @@ class GNNStack(torch.nn.Module):
         # HINT: the __init__ function contains parameters you will need. You may 
         # also find pyg_nn.global_max_pool useful for graph classification.
         # Our implementation is ~6 lines, but don't worry if you deviate from this.
-
+        ############################################################################
         for conv_layer in self.convs:
-            x = self.conv_layer(x, edge_index)
+            x = conv_layer(x, edge_index)
             x = F.relu(x)
             x = F.dropout(x, training=self.training)
 
@@ -74,8 +74,9 @@ class GraphSage(pyg_nn.MessagePassing):
         # Define the layers needed for the forward function. 
         # Our implementation is ~2 lines, but don't worry if you deviate from this.
 
-        self.lin = None # TODO
-        self.agg_lin = None # TODO
+        print("zona - GraphSage.init ... in_channels {} out_channels {}".format(in_channels, out_channels))
+        self.lin = nn.Linear(in_channels, out_channels)
+        self.agg_lin = nn.Linear(in_channels, out_channels)
 
         ############################################################################
 
@@ -83,7 +84,6 @@ class GraphSage(pyg_nn.MessagePassing):
             self.normalize_emb = True
 
     def forward(self, x, edge_index):
-        num_nodes = x.size(0)
         # x has shape [N, in_channels]
         # edge_index has shape [2, E]
 
@@ -95,6 +95,63 @@ class GraphSage(pyg_nn.MessagePassing):
         # https://pytorch-geometric.readthedocs.io/en/latest/notes/create_gnn.html
         # Our implementation is ~4 lines, but don't worry if you deviate from this.
 
+        print(type(x))
+        num_nodes = x.size(0)
+
+        print(x.size())
+        print(x[0])
+        print(x[1])
+        print(x[2707])
+
+        for node in range(0, num_nodes):
+            zona = 0
+
+        num_edges = edge_index.size()[1] 
+        print("num_edges {}".format(num_edges))
+        for e in range(0,10):
+            fr = edge_index[0,e]
+            to = edge_index[1,e]
+            print("edge {} from {} to {}".format(e, fr, to))
+        for e in range(num_edges-5, num_edges):
+            fr = edge_index[0,e]
+            to = edge_index[1,e]
+            print("edge {} from {} to {}".format(e, fr, to))
+
+        # for node in range(0,2):
+        #     # get subgraph of immediate neighbors
+        #     zona = pyg_utils.subgraph(
+        #         subset = [node],
+        #         edge_index = edge_index)
+        #     print("zona {}".format(zona))
+
+        # assert False, "foo"
+
+        for node in range(0,2):
+            # get neighbor edge list
+            sub_nodes, sub_edges, sub_map, sub_mask = pyg_utils.k_hop_subgraph(
+                node_idx = [node],
+                num_hops = 1,
+                edge_index = edge_index,
+                relabel_nodes=False,
+                num_nodes=num_nodes,
+                flow='target_to_source')
+            print("sub_edges of node {} is {}".format(node, sub_edges))
+
+        assert False, "halt"
+
+        for node in x.items():
+            print("n {} node {}".format(n,node))
+            print(node.size())
+            print(node)
+            for i,j in edge_index:
+                print("i={} j={}".format(i,j))
+                # if j is neighbor of i then aggregate...
+
+
+        x = self.lin(x)
+
+
+        # reLu i.e. gamma
         out = None # TODO
 
         ############################################################################
@@ -129,6 +186,8 @@ class GAT(pyg_nn.MessagePassing):
     def __init__(self, in_channels, out_channels, num_heads=1, concat=True,
                  dropout=0, bias=True, **kwargs):
         super(GAT, self).__init__(aggr='add', **kwargs)
+
+        print("zona - GAT.init ...")
 
         self.in_channels = in_channels
         self.out_channels = out_channels
