@@ -75,7 +75,7 @@ class GraphSage(pyg_nn.MessagePassing):
         # Our implementation is ~2 lines, but don't worry if you deviate from this.
 
         print("zona - GraphSage.init ... in_channels {} out_channels {}".format(in_channels, out_channels))
-        self.lin = nn.Linear(in_channels, out_channels)  # i.e. phi
+        self.lin = nn.Linear(2* in_channels, out_channels)  # i.e. phi
         self.agg_lin = nn.Linear(out_channels, out_channels)  # i.e. gamma
 
         ############################################################################
@@ -105,22 +105,23 @@ class GraphSage(pyg_nn.MessagePassing):
         # print("zona - x[{}]   {}".format(zz, x[zz]))
         # print("zona - out[{}] {}".format(zz, out[zz]))
 
+        # aggregate
         for node in range(1,3):
             neighbor_nodes, neighbor_edges, _, _ = pyg_utils.k_hop_subgraph(
                 node_idx = [node],
                 num_hops = 1,
                 edge_index = edge_index,
                 flow='target_to_source')
-            # print("zona - neighbor_nodes {}".format(neighbor_nodes))
-            # aggregation is the sum
             for neighbor in neighbor_nodes:
-                # if node == 1 or node==2:  # zona
-                #     print("zona -   node {} neighbor {}".format(node, neighbor))
-                #     print("zona -   out[node]   {}".format(out[node]))
-                #     print("zona -   x[neighbor] {}".format(x[neighbor]))
                 out[node] += x[neighbor]
 
+        # concat
+        out = torch.concat((out,x), axis=1)
+        # print("zona - out.size() {}".format(out.size()))
+
+        # apply W
         out = self.lin(out)
+        # print("zona - out.size() {}".format(out.size()))
 
         ############################################################################
 
