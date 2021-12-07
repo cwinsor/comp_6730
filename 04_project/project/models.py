@@ -8,6 +8,10 @@ import torch_geometric.utils as pyg_utils
 class GNNStack(torch.nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, args, task='node'):
         super(GNNStack, self).__init__()
+
+        print("zona model_type = {}".format((args.model_type)))
+        print("zona model args = {}".format(args))
+
         conv_model = self.build_conv_model(args.model_type)
         self.convs = nn.ModuleList()
         self.convs.append(conv_model(input_dim, hidden_dim))
@@ -45,10 +49,11 @@ class GNNStack(torch.nn.Module):
         # HINT: the __init__ function contains parameters you will need. You may 
         # also find pyg_nn.global_max_pool useful for graph classification.
         # Our implementation is ~6 lines, but don't worry if you deviate from this.
-
-        x = None # TODO
-
         ############################################################################
+        for conv_layer in self.convs:
+            x = conv_layer(x, edge_index)
+            x = F.relu(x)
+            x = F.dropout(x, training=self.training)
 
         x = self.post_mp(x)
 
@@ -69,8 +74,9 @@ class GraphSage(pyg_nn.MessagePassing):
         # Define the layers needed for the forward function. 
         # Our implementation is ~2 lines, but don't worry if you deviate from this.
 
-        self.lin = None # TODO
-        self.agg_lin = None # TODO
+        print("zona - GraphSage.init ... in_channels {} out_channels {}".format(in_channels, out_channels))
+        self.lin = nn.Linear(2* in_channels, out_channels)  # i.e. phi
+        self.agg_lin = nn.Linear(out_channels, out_channels)  # i.e. gamma
 
         ############################################################################
 
@@ -90,7 +96,32 @@ class GraphSage(pyg_nn.MessagePassing):
         # https://pytorch-geometric.readthedocs.io/en/latest/notes/create_gnn.html
         # Our implementation is ~4 lines, but don't worry if you deviate from this.
 
-        out = None # TODO
+        out = torch.zeros(x.size())
+
+        # print("zona - forward")
+        # print("zona - x.size()   {}".format(x.size()))
+        # print("zona - out.size() {}".format(out.size()))
+        # zz = 2707
+        # print("zona - x[{}]   {}".format(zz, x[zz]))
+        # print("zona - out[{}] {}".format(zz, out[zz]))
+
+        # aggregate
+        for node in range(1,3):
+            neighbor_nodes, neighbor_edges, _, _ = pyg_utils.k_hop_subgraph(
+                node_idx = [node],
+                num_hops = 1,
+                edge_index = edge_index,
+                flow='target_to_source')
+            for neighbor in neighbor_nodes:
+                out[node] += x[neighbor]
+
+        # concat
+        out = torch.concat((out,x), axis=1)
+        # print("zona - out.size() {}".format(out.size()))
+
+        # apply W
+        out = self.lin(out)
+        # print("zona - out.size() {}".format(out.size()))
 
         ############################################################################
 
@@ -106,13 +137,39 @@ class GraphSage(pyg_nn.MessagePassing):
 
         return norm.view(-1, 1) * x_j
 
+    # def aggregate(self, inputs, index, ptr, dim_size):
+    #     print("zona - aggregate")
+    #     return super().aggregate(inputs, index, ptr, dim_size)
+
     def update(self, aggr_out):
         ############################################################################
         # TODO: Your code here! Perform the update step here. 
         # Our implementation is ~1 line, but don't worry if you deviate from this.
 
+        # print("zona - update")
+        # print(type(aggr_out))
+        # print("zona - aggr_out.size()   {}".format(aggr_out.size()))
+        # zz = 2707  # zona
+        # print("zona - aggr_out[{}]   {}".format(zz, aggr_out[zz]))
+
         if self.normalize_emb:
-            aggr_out = None # TODO
+            # # test...
+            # # v = [1 -2 3];
+            # # n = norm(v)
+            # # expect n = 3.7417
+            # test = torch.tensor([[1, -2, 3],[1, -2, 3]], dtype=torch.float)
+            # sum_squ = torch.norm(test, dim=1, keepdim=True)
+            # print(sum_squ)
+            # print(test/sum_squ)
+            # assert False, "zona"
+
+            sum_squ = torch.norm(aggr_out, dim=1, keepdim=True)
+            aggr_out = aggr_out/sum_squ
+        else:
+            assert False, "zona - not coded!"
+
+        # gamma
+        aggr_out = self.agg_lin(aggr_out)
 
         ############################################################################
 
@@ -124,6 +181,8 @@ class GAT(pyg_nn.MessagePassing):
     def __init__(self, in_channels, out_channels, num_heads=1, concat=True,
                  dropout=0, bias=True, **kwargs):
         super(GAT, self).__init__(aggr='add', **kwargs)
+
+        print("zona - GAT.init ...")
 
         self.in_channels = in_channels
         self.out_channels = out_channels
