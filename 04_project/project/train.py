@@ -16,6 +16,8 @@ import torch_geometric.nn as pyg_nn
 import models
 import utils
 
+import matplotlib.pyplot as plt
+
 
 def arg_parse():
     parser = argparse.ArgumentParser(description='GNN arguments.')
@@ -54,29 +56,17 @@ def train(dataset, task, args):
 
     print("train args = {}".format(args))
     print("number of graphs in dataset {}".format(len(dataset)))
+    graph_0 = dataset[0]
+    print("number of nodes in the graph {}".format(graph_0.x.size()))
     print("dataset.num_classes {}".format(dataset.num_classes))
     print("dataset.num_node_features {}".format(dataset.num_node_features))
-    # sum = 0
-    for zz in range(0,10):
-        dataz = dataset[zz]
-        print("dataset[{}] {}".format(zz,dataz))
-    #     sum += dataz.size(1)
-    #     # print("dataset[{}].is_undirected {}".format(zz,data.is_undirected()))
-    # print(sum)
-    # print(sum)
-
     if task == 'graph':
         # graph classification: separate dataloader for test set
         data_size = len(dataset)
-        # loader = DataLoader(
-        #         dataset[:int(data_size * 0.8)], batch_size=args.batch_size, shuffle=True)
-        # test_loader = DataLoader(
-        #         dataset[int(data_size * 0.8):], batch_size=args.batch_size, shuffle=True)
         loader = DataLoader(
-                dataset, batch_size=args.batch_size, shuffle=False)
+                dataset[:int(data_size * 0.8)], batch_size=args.batch_size, shuffle=True)
         test_loader = DataLoader(
-                dataset, batch_size=args.batch_size, shuffle=False)
-                
+                dataset[int(data_size * 0.8):], batch_size=args.batch_size, shuffle=True)               
     elif task == 'node':
         # use mask to split train/validation/test
         test_loader = loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
@@ -89,6 +79,9 @@ def train(dataset, task, args):
     print("zona - model.parameters {}".format(model.parameters()))
     scheduler, opt = utils.build_optimizer(args, model.parameters())
 
+    test_acc_list = []
+    validation_acc_list = []
+
     # train
     for epoch in range(args.epochs):
         # print("zona - epoch {} of {}".format(epoch, args.epochs))
@@ -97,9 +90,7 @@ def train(dataset, task, args):
         for batch in loader:
             opt.zero_grad()
             pred = model(batch)
-            print("pred.shape {}".format(pred.shape))
             label = batch.y
-            print("label.shape {}".format(label.shape))
             if task == 'node':
                 pred = pred[batch.train_mask]
                 label = label[batch.train_mask]
@@ -110,10 +101,25 @@ def train(dataset, task, args):
         total_loss /= len(loader.dataset)
         print(total_loss)
 
-        if epoch % 10 == 0:
+        if True:
+        # if epoch % 10 == 0:
             test_acc = test(test_loader, model)
             print(test_acc,   '  test')
-    print("zona - done training!")
+            test_acc_list.append(test_acc)
+
+        validation_acc = test(test_loader, model, is_validation=True)
+        validation_acc_list.append(validation_acc)
+
+    print("zona - done training")
+
+    plt.figure(figsize=(10,5))
+    plt.title("Training and Validation Accuracy - CORA using GraphSAGE")
+    plt.plot(test_acc_list,label="training")
+    plt.plot(validation_acc_list,label="validation")
+    plt.xlabel("epoch")
+    plt.ylabel("accuracy")
+    plt.legend()
+    plt.show()
 
 def test(loader, model, is_validation=False):
     model.eval()
