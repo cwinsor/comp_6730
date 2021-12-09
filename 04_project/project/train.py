@@ -53,21 +53,30 @@ def arg_parse():
 def train(dataset, task, args):
 
     print("train args = {}".format(args))
-    print("len(dataset) {}".format(len(dataset)))
+    print("number of graphs in dataset {}".format(len(dataset)))
     print("dataset.num_classes {}".format(dataset.num_classes))
     print("dataset.num_node_features {}".format(dataset.num_node_features))
-    data = dataset[0]
-    print("dataset[0] {}".format(data))
-    print("dataset[0].is_undirected {}".format(data.is_undirected()))
-
+    # sum = 0
+    for zz in range(0,10):
+        dataz = dataset[zz]
+        print("dataset[{}] {}".format(zz,dataz))
+    #     sum += dataz.size(1)
+    #     # print("dataset[{}].is_undirected {}".format(zz,data.is_undirected()))
+    # print(sum)
+    # print(sum)
 
     if task == 'graph':
         # graph classification: separate dataloader for test set
         data_size = len(dataset)
+        # loader = DataLoader(
+        #         dataset[:int(data_size * 0.8)], batch_size=args.batch_size, shuffle=True)
+        # test_loader = DataLoader(
+        #         dataset[int(data_size * 0.8):], batch_size=args.batch_size, shuffle=True)
         loader = DataLoader(
-                dataset[:int(data_size * 0.8)], batch_size=args.batch_size, shuffle=True)
+                dataset, batch_size=args.batch_size, shuffle=False)
         test_loader = DataLoader(
-                dataset[int(data_size * 0.8):], batch_size=args.batch_size, shuffle=True)
+                dataset, batch_size=args.batch_size, shuffle=False)
+                
     elif task == 'node':
         # use mask to split train/validation/test
         test_loader = loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
@@ -77,6 +86,7 @@ def train(dataset, task, args):
     # build model
     model = models.GNNStack(dataset.num_node_features, args.hidden_dim, dataset.num_classes, 
                             args, task=task)
+    print("zona - model.parameters {}".format(model.parameters()))
     scheduler, opt = utils.build_optimizer(args, model.parameters())
 
     # train
@@ -87,7 +97,9 @@ def train(dataset, task, args):
         for batch in loader:
             opt.zero_grad()
             pred = model(batch)
+            print("pred.shape {}".format(pred.shape))
             label = batch.y
+            print("label.shape {}".format(label.shape))
             if task == 'node':
                 pred = pred[batch.train_mask]
                 label = label[batch.train_mask]

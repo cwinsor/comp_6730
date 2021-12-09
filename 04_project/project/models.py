@@ -75,7 +75,7 @@ class GraphSage(pyg_nn.MessagePassing):
         # Our implementation is ~2 lines, but don't worry if you deviate from this.
 
         print("zona - GraphSage.init ... in_channels {} out_channels {}".format(in_channels, out_channels))
-        self.lin = nn.Linear(2* in_channels, out_channels)  # i.e. phi
+        self.lin = nn.Linear(2* in_channels, out_channels)  # in channels = concat(neighbor, node), out channel = target embeddiung
         self.agg_lin = nn.Linear(out_channels, out_channels)  # i.e. gamma
 
         ############################################################################
@@ -137,9 +137,6 @@ class GraphSage(pyg_nn.MessagePassing):
 
         return norm.view(-1, 1) * x_j
 
-    # def aggregate(self, inputs, index, ptr, dim_size):
-    #     print("zona - aggregate")
-    #     return super().aggregate(inputs, index, ptr, dim_size)
 
     def update(self, aggr_out):
         ############################################################################
@@ -182,8 +179,6 @@ class GAT(pyg_nn.MessagePassing):
                  dropout=0, bias=True, **kwargs):
         super(GAT, self).__init__(aggr='add', **kwargs)
 
-        print("zona - GAT.init ...")
-
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.heads = num_heads
@@ -195,8 +190,11 @@ class GAT(pyg_nn.MessagePassing):
         # Define the layers needed for the forward function. 
         # Remember that the shape of the output depends the number of heads.
         # Our implementation is ~1 line, but don't worry if you deviate from this.
+        print("zona - GAT.init ... in_channels {} out_channels {} num_heads {}".format(in_channels, out_channels, num_heads))
 
-        self.lin = None # TODO
+        # self.lin_src = Linear(in_channels[0], heads * out_channels, False, weight_initializer='glorot')
+        # self.lin = torch.nn.Linear(in_channels, num_heads * out_channels)
+        self.lin = torch.nn.Linear(in_channels, num_heads * out_channels, False)
 
         ############################################################################
 
@@ -207,7 +205,8 @@ class GAT(pyg_nn.MessagePassing):
         # mechanism here. Remember to consider number of heads for dimension!
         # Our implementation is ~1 line, but don't worry if you deviate from this.
 
-        self.att = None # TODO
+        self.att = torch.nn.Parameter(torch.Tensor(1, num_heads, out_channels))
+
 
         ############################################################################
 
@@ -229,12 +228,36 @@ class GAT(pyg_nn.MessagePassing):
         # Apply your linear transformation to the node feature matrix before starting
         # to propagate messages.
         # Our implementation is ~1 line, but don't worry if you deviate from this.
-        
-        x = None # TODO
+
+        H, C = self.heads, self.out_channels
+        # x_src = self.lin_src(x_src).view(-1, H, C)
+        print("------ forward ----")
+        print("shape x before {}".format(x.shape))
+        print(self.lin)
+        xx = self.lin(x)
+        print("shape xx middle {}".format(xx.shape))
+        x = xx.view(C, -1, H)
+        print("shape x after  {}".format(x.shape))
+        print(x.size())
+        # for zz in range(0, 10):
+        #     print("    {}".format(x[zz]))
+
+        assert edge_index.dtype == torch.long
+        assert edge_index.dim() == 2
+        assert edge_index.size(0) == 2
+        # if size is not None:
+        #     the_size[0] = size[0]
+        #     the_size[1] = size[1]
+        zona = 2
         ############################################################################
 
         # Start propagating messages.
-        return self.propagate(edge_index, size=size, x=x)
+        print(edge_index.size())
+        print(edge_index)
+        print(x.size())
+        # zona = self.propagate(edge_index, size=x.size(), x=x)
+        zona = self.propagate(edge_index, size=None, x=x)
+        return zona
 
     def message(self, edge_index_i, x_i, x_j, size_i):
         #  Constructs messages to node i for each edge (j, i).
@@ -245,13 +268,33 @@ class GAT(pyg_nn.MessagePassing):
         # dimension!
         # Our implementation is ~5 lines, but don't worry if you deviate from this.
 
-        alpha = None # TODO
+        print("----message----")
+        # print("x_i.shape {}".format(x_i.shape))
+        # print(x_i)
+        # print("x_j.shape {}".format(x_j.shape))
+        # print(x_j)
+        alpha_src = (x_i * self.att).sum(dim=-1)
+        alpha_dst = (x_j * self.att).sum(dim=-1)
+        # print("alpha_src.shape {}".format(alpha_src.shape))
+        # print("alpha_dst.shape {}".format(alpha_dst.shape))
+        alpha = torch.cat((alpha_src, alpha_dst), 0)  #
+        # print(type(alpha))
+        # print("alpha shape() {}".format(alpha.shape))
+        relu_slope = 0.2  # paper says this reference equation (7)
+        alpha = F.leaky_relu(alpha, 0.2) # paper says ReLu slope 0.2 ref equation (7)
+        # alpha = softmax(alpha, index, ptr, size_i)
+        # print("before softmax alpha.shape {}".format(alpha.shape))
+        alpha = pyg_utils.softmax(torch.t(alpha), index=edge_index_i)
+        # print("after softmax  alpha.shape {}".format(alpha.shape))
 
         ############################################################################
 
         alpha = F.dropout(alpha, p=self.dropout, training=self.training)
-
-        return x_j * alpha.view(-1, self.heads, 1)
+        # print("zona new alpha after dropout  alpha.shape {}".format(alpha.shape))
+        # zzona = x_j * alpha.view(-1, self.heads, 1)
+        # zzona = x_j * alpha.view(-1, self.heads)
+        zzona = x_j * alpha
+        return zzona
 
     def update(self, aggr_out):
         # Updates node embedings.
