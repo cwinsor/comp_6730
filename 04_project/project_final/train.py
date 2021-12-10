@@ -15,6 +15,7 @@ import torch_geometric.nn as pyg_nn
 
 import models
 import utils
+import matplotlib.pyplot as plt
 
 
 def arg_parse():
@@ -55,12 +56,12 @@ def train(dataset, task, args):
         # graph classification: separate dataloader for test set
         data_size = len(dataset)
         loader = DataLoader(
-                dataset[:int(data_size * 0.8)], batch_size=args.batch_size, shuffle=True)
+                dataset[:int(data_size * 0.8)], batch_size=args.batch_size, shuffle=False) # zona
         test_loader = DataLoader(
-                dataset[int(data_size * 0.8):], batch_size=args.batch_size, shuffle=True)
+                dataset[int(data_size * 0.8):], batch_size=args.batch_size, shuffle=False)  # zona
     elif task == 'node':
         # use mask to split train/validation/test
-        test_loader = loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
+        test_loader = loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False)  # zona
     else:
         raise RuntimeError('Unknown task')
 
@@ -68,6 +69,9 @@ def train(dataset, task, args):
     model = models.GNNStack(dataset.num_node_features, args.hidden_dim, dataset.num_classes, 
                             args, task=task)
     scheduler, opt = utils.build_optimizer(args, model.parameters())
+
+    test_acc_list = []
+    validation_acc_list = []
 
     # train
     for epoch in range(args.epochs):
@@ -87,9 +91,24 @@ def train(dataset, task, args):
         total_loss /= len(loader.dataset)
         print(total_loss)
 
-        if epoch % 10 == 0:
+        if True:
+        # if epoch % 10 == 0:
             test_acc = test(test_loader, model)
             print(test_acc,   '  test')
+            test_acc_list.append(test_acc)
+
+        validation_acc = test(test_loader, model, is_validation=True)
+        validation_acc_list.append(validation_acc)
+
+    plt.figure(figsize=(10,5))
+    title = "Training and Validation Accuracy for dataset {} using {}".format(args.dataset, args.model_type)
+    plt.title(title)
+    plt.plot(test_acc_list,label="training")
+    plt.plot(validation_acc_list,label="validation")
+    plt.xlabel("epoch")
+    plt.ylabel("accuracy")
+    plt.legend()
+    plt.show()
 
 def test(loader, model, is_validation=False):
     model.eval()

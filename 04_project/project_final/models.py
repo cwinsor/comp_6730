@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 import torch_geometric.nn as pyg_nn
+from torch_geometric.typing import EdgeType
 import torch_geometric.utils as pyg_utils
 
 class GNNStack(torch.nn.Module):
@@ -46,7 +47,10 @@ class GNNStack(torch.nn.Module):
         # also find pyg_nn.global_max_pool useful for graph classification.
         # Our implementation is ~6 lines, but don't worry if you deviate from this.
 
-        x = None # TODO
+        for conv_layer in self.convs:
+            x = conv_layer(x, edge_index)
+            x = F.relu(x)
+            x = F.dropout(x, training=self.training)
 
         ############################################################################
 
@@ -69,8 +73,8 @@ class GraphSage(pyg_nn.MessagePassing):
         # Define the layers needed for the forward function. 
         # Our implementation is ~2 lines, but don't worry if you deviate from this.
 
-        self.lin = None # TODO
-        self.agg_lin = None # TODO
+        self.lin = nn.Linear(2* in_channels, out_channels)
+        self.agg_lin = nn.Linear(out_channels, out_channels)
 
         ############################################################################
 
@@ -90,7 +94,24 @@ class GraphSage(pyg_nn.MessagePassing):
         # https://pytorch-geometric.readthedocs.io/en/latest/notes/create_gnn.html
         # Our implementation is ~4 lines, but don't worry if you deviate from this.
 
-        out = None # TODO
+        # initialize
+        out = torch.zeros(x.size())
+
+        # aggregate
+        for node in range(1,3):
+            neighbor_nodes, neighbor_edges, _, _ = pyg_utils.k_hop_subgraph(
+                node_idx = [node],
+                num_hops = 1,
+                edge_index = edge_index,
+                flow='target_to_source')
+            for neighbor in neighbor_nodes:
+                out[node] += x[neighbor]
+
+        # concat
+        out = torch.concat((out,x), axis=1)
+
+        # apply W
+        out = self.lin(out)
 
         ############################################################################
 
@@ -112,7 +133,12 @@ class GraphSage(pyg_nn.MessagePassing):
         # Our implementation is ~1 line, but don't worry if you deviate from this.
 
         if self.normalize_emb:
-            aggr_out = None # TODO
+            sum_squ = torch.norm(aggr_out, dim=1, keepdim=True)
+            aggr_out = aggr_out/sum_squ
+        else:
+            assert False, "zona - not coded!"
+        # gamma
+        aggr_out = self.agg_lin(aggr_out)
 
         ############################################################################
 
@@ -137,7 +163,7 @@ class GAT(pyg_nn.MessagePassing):
         # Remember that the shape of the output depends the number of heads.
         # Our implementation is ~1 line, but don't worry if you deviate from this.
 
-        self.lin = None # TODO
+        self.lin = torch.nn.Linear(in_channels, num_heads * out_channels, False)
 
         ############################################################################
 
@@ -148,7 +174,7 @@ class GAT(pyg_nn.MessagePassing):
         # mechanism here. Remember to consider number of heads for dimension!
         # Our implementation is ~1 line, but don't worry if you deviate from this.
 
-        self.att = None # TODO
+        self.att = torch.nn.Parameter(torch.Tensor(1, num_heads, out_channels))
 
         ############################################################################
 
@@ -171,7 +197,13 @@ class GAT(pyg_nn.MessagePassing):
         # to propagate messages.
         # Our implementation is ~1 line, but don't worry if you deviate from this.
         
-        x = None # TODO
+        H, C = self.heads, self.out_channels
+        print("-2 shape x {}".format(x.size()))
+        x = self.lin(x)
+        print("-1 shape x {}".format(x.size()))
+        # x = x.view(C, -1, H)
+        print("0 shape x {}".format(x.size()))
+
         ############################################################################
 
         # Start propagating messages.
@@ -186,11 +218,35 @@ class GAT(pyg_nn.MessagePassing):
         # dimension!
         # Our implementation is ~5 lines, but don't worry if you deviate from this.
 
-        alpha = None # TODO
+        print("edge_index_i {}".format(edge_index_i.size()))
 
+        print("1 x_i {}".format(x_i.size()))
+        print("1 x_j {}".format(x_j.size()))
+
+        # alpha_src = (x_i * self.att).sum(dim=-1)
+        # alpha_dst = (x_j * self.att).sum(dim=-1)
+        alpha_src = (x_i * self.att)
+        alpha_dst = (x_j * self.att)
+        print("2 alpha_src {}".format(alpha_src.size()))
+        print("2 alpha_dst {}".format(alpha_dst.size()))
+
+        # alpha = torch.cat((alpha_src, alpha_dst), 0)
+        alpha = alpha_src + alpha_dst
+        print("3 after cat {}".format(alpha.size()))
+
+        alpha = F.leaky_relu(alpha, 0.2) # paper says ReLu slope 0.2 ref equation (7)
+        alpha = alpha.view(-1, self.heads, self.out_channels)
+        print("4 alpha {}".format(alpha.size()))
+
+        alpha = pyg_utils.softmax(alpha, index=edge_index_i)
+        print("5 alpha {}".format(alpha.size()))
         ############################################################################
 
         alpha = F.dropout(alpha, p=self.dropout, training=self.training)
+        print("6 alpha {}".format(alpha.size()))
+
+        rtn = x_j * alpha.view(-1, self.heads, 1)
+        print("7 alpha {}".format(rtn.size()))
 
         return x_j * alpha.view(-1, self.heads, 1)
 
