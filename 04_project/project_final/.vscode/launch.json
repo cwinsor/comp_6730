@@ -18,7 +18,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args" : ["--dataset", "cora", "--model_type", "GCN", "--dropout", "0.5", "--weight_decay", "5e-3", "--epochs", "500"],
+            "args" : ["--dataset", "cora", "--model_type", "GCN", "--dropout", "0.5", "--weight_decay", "5e-3", "--epochs", "200"],
             "justMyCode": false
         },
         {
@@ -27,7 +27,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args" : ["--dataset", "cora", "--model_type", "GraphSage", "--dropout", "0.5", "--weight_decay", "5e-3", "--epochs", "500"],
+            "args" : ["--dataset", "cora", "--model_type", "GraphSage", "--dropout", "0.5", "--weight_decay", "5e-3", "--epochs", "200"],
             "justMyCode": false
         },
         {
@@ -36,7 +36,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args" : ["--dataset", "enzymes", "--model_type", "GCN", "--weight_decay", "5e-3", "--num_layers", "3", "--epochs", "500"],
+            "args" : ["--dataset", "enzymes", "--model_type", "GCN", "--weight_decay", "5e-3", "--num_layers", "3", "--epochs", "200"],
             "justMyCode": false
         },
         {
@@ -45,7 +45,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args" : ["--dataset", "enzymes", "--model_type", "GAT", "--weight_decay", "5e-3", "--num_layers", "3", "--epochs", "500"],
+            "args" : ["--dataset", "enzymes", "--model_type", "GAT", "--weight_decay", "5e-3", "--num_layers", "3", "--epochs", "200"],
             "justMyCode": false
         }
     ]

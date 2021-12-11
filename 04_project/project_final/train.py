@@ -100,15 +100,30 @@ def train(dataset, task, args):
         validation_acc = test(test_loader, model, is_validation=True)
         validation_acc_list.append(validation_acc)
 
-    plt.figure(figsize=(10,5))
-    title = "Training and Validation Accuracy for dataset {} using {}".format(args.dataset, args.model_type)
-    plt.title(title)
-    plt.plot(test_acc_list,label="training")
-    plt.plot(validation_acc_list,label="validation")
-    plt.xlabel("epoch")
-    plt.ylabel("accuracy")
-    plt.legend()
-    plt.show()
+    if False:
+        import pickle
+        with open('outfile_gcn', 'wb') as fp:
+            pickle.dump(test_acc_list, fp)
+    if True:
+        import pickle
+        with open('outfile_sage', 'wb') as fp:
+            pickle.dump(test_acc_list, fp)
+
+    if True:
+        with open ('outfile_gcn', 'rb') as fp:
+            validation_gcn = pickle.load(fp)
+        with open ('outfile_sage', 'rb') as fp:
+            validation_sage = pickle.load(fp) 
+        plt.figure(figsize=(10,5))
+        title = "Validation Accuracy vs Epoch for CORA (GCN, GraphSage)"
+        plt.title(title)
+        plt.plot(validation_gcn,label="GCN")
+        plt.plot(validation_sage,label="GraphSAGE")
+        plt.xlabel("epoch")
+        plt.ylabel("accuracy")
+        plt.legend()
+        plt.show()
+
 
 def test(loader, model, is_validation=False):
     model.eval()
