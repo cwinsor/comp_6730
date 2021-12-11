@@ -9,7 +9,8 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "justMyCode": false
         },
         {
             "name": "Python: cora GCN",
@@ -17,7 +18,8 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args" : ["--dataset", "cora", "--model_type", "GCN", "--dropout", "0.5", "--weight_decay", "5e-3", "--epochs", "500"]
+            "args" : ["--dataset", "cora", "--model_type", "GCN", "--dropout", "0.5", "--weight_decay", "5e-3", "--epochs", "500"],
+            "justMyCode": false
         },
         {
             "name": "Python: cora SAGE",
@@ -25,7 +27,8 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args" : ["--dataset", "cora", "--model_type", "GraphSage", "--dropout", "0.5", "--weight_decay", "5e-3", "--epochs", "500"]
+            "args" : ["--dataset", "cora", "--model_type", "GraphSage", "--dropout", "0.5", "--weight_decay", "5e-3", "--epochs", "500"],
+            "justMyCode": false
         },
         {
             "name": "Python: enzymes GCN",
@@ -33,7 +36,8 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args" : ["--dataset", "enzymes", "--model_type", "GCN", "--weight_decay", "5e-3", "--num_layers", "3", "--epochs", "500"]
+            "args" : ["--dataset", "enzymes", "--model_type", "GCN", "--weight_decay", "5e-3", "--num_layers", "3", "--epochs", "500"],
+            "justMyCode": false
         },
         {
             "name": "Python: enzymes GAT",
@@ -41,7 +45,8 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args" : ["--dataset", "enzymes", "--model_type", "GAT", "--weight_decay", "5e-3", "--num_layers", "3", "--epochs", "500",]
+            "args" : ["--dataset", "enzymes", "--model_type", "GAT", "--weight_decay", "5e-3", "--num_layers", "3", "--epochs", "500"],
+            "justMyCode": false
         }
     ]
 }

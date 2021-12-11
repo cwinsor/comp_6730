@@ -176,6 +176,13 @@ class GAT(pyg_nn.MessagePassing):
 
         self.att = torch.nn.Parameter(torch.Tensor(1, num_heads, out_channels))
 
+        self._alpha = None
+        # reset parameters...
+        self.lin.reset_parameters()
+        self.att.register_parameters()
+        # zeros(self.bias)
+
+
         ############################################################################
 
         if bias and concat:
@@ -196,13 +203,13 @@ class GAT(pyg_nn.MessagePassing):
         # Apply your linear transformation to the node feature matrix before starting
         # to propagate messages.
         # Our implementation is ~1 line, but don't worry if you deviate from this.
-        
         H, C = self.heads, self.out_channels
-        print("-2 shape x {}".format(x.size()))
-        x = self.lin(x)
-        print("-1 shape x {}".format(x.size()))
-        # x = x.view(C, -1, H)
-        print("0 shape x {}".format(x.size()))
+        x_src = x_dst = self.lin(x).view(-1, H, C)
+        x = (x_src, x_dst)
+        alpha_src = (x_src * self.att).sum(dim=-1)
+        alpha_dst = (x_dst * self.att).sum(dim=-1)
+        # alpha = torch.cat((alpha_src, alpha_dst), 0)
+        alpha = alpha_src + alpha_dst
 
         ############################################################################
 
@@ -218,36 +225,11 @@ class GAT(pyg_nn.MessagePassing):
         # dimension!
         # Our implementation is ~5 lines, but don't worry if you deviate from this.
 
-        print("edge_index_i {}".format(edge_index_i.size()))
-
-        print("1 x_i {}".format(x_i.size()))
-        print("1 x_j {}".format(x_j.size()))
-
-        # alpha_src = (x_i * self.att).sum(dim=-1)
-        # alpha_dst = (x_j * self.att).sum(dim=-1)
-        alpha_src = (x_i * self.att)
-        alpha_dst = (x_j * self.att)
-        print("2 alpha_src {}".format(alpha_src.size()))
-        print("2 alpha_dst {}".format(alpha_dst.size()))
-
-        # alpha = torch.cat((alpha_src, alpha_dst), 0)
-        alpha = alpha_src + alpha_dst
-        print("3 after cat {}".format(alpha.size()))
-
         alpha = F.leaky_relu(alpha, 0.2) # paper says ReLu slope 0.2 ref equation (7)
         alpha = alpha.view(-1, self.heads, self.out_channels)
-        print("4 alpha {}".format(alpha.size()))
-
         alpha = pyg_utils.softmax(alpha, index=edge_index_i)
-        print("5 alpha {}".format(alpha.size()))
-        ############################################################################
-
         alpha = F.dropout(alpha, p=self.dropout, training=self.training)
-        print("6 alpha {}".format(alpha.size()))
-
         rtn = x_j * alpha.view(-1, self.heads, 1)
-        print("7 alpha {}".format(rtn.size()))
-
         return x_j * alpha.view(-1, self.heads, 1)
 
     def update(self, aggr_out):
